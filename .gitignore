@@ -1,0 +1,8 @@
+.env
+*/chroma_db/
+postgres/data/
+*.log
+.DS_Store
+__pycache__/
+*.pyc
+EOF
