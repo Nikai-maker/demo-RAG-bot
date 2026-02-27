@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: ankane/pgvector:latest
+    # или использовать postgres:15 и установить pgvector вручную
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    container_name: rag_redis
+    restart: always
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: rag_n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    env_file:
+      - .env
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./shared:/data   # сюда можно складывать файлы
+
+  worker:
+    build: ./worker
+    container_name: rag_worker
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./shared:/data   # worker видит те же файлы
+
+volumes:
+  pgdata:
+  n8n_data:

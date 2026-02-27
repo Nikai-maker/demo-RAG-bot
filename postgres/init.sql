@@ -1,2 +1,2 @@
--- init.sql
+-- postgres/init.sql
 CREATE EXTENSION IF NOT EXISTS vector;
