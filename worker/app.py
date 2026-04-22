@@ -4,7 +4,7 @@ import threading
 from redis_consumer import consume
 
 app = FastAPI()
-
+# Починил баг быстро
 @app.on_event("startup")
 def start_consumer():
     thread = threading.Thread(target=consume, daemon=True)
