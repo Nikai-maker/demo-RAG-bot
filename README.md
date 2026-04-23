@@ -192,4 +192,5 @@ worker/
 - Role-based access
 - Background status tracking
 - Kubernetes deployment
-- Monitoring (Prometheus / Grafana)
+- Monitoring (Prometheus / Grafana)\
+- и другие
