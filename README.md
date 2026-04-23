@@ -187,10 +187,10 @@ worker/
 
 ## 🔮 Возможные расширения
 
-- Поддержка S3
+- Поддержка S3 хранилища
 - Rate limiting
 - Role-based access
 - Background status tracking
 - Kubernetes deployment
-- Monitoring (Prometheus / Grafana)\
+- Monitoring (Prometheus / Grafana)
 - и другие
