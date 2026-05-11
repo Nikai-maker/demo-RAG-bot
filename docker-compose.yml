@@ -1,55 +1,51 @@
-version: "3.9"
-
 services:
-  postgres:
-    image: ankane/pgvector:latest
-    # или использовать postgres:15 и установить pgvector вручную
-    volumes:
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "5432:5432"
-
-  redis:
-    image: redis:7
-    container_name: rag_redis
-    restart: always
-
   n8n:
-    image: n8nio/n8n:latest
-    container_name: rag_n8n
-    restart: always
+    image: n8nio/n8n
+    container_name: n8n
     ports:
-      - "5678:5678"
-    env_file:
-      - .env
+      - "5678:5678"  # Доступ к n8n через http://localhost:5678
     environment:
+      - GENERIC_TIMEZONE=UTC
       - N8N_HOST=localhost
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
-      - NODE_ENV=production
-      - WEBHOOK_URL=http://localhost:5678/
     volumes:
-      - n8n_data:/home/node/.n8n
-      - ./shared:/data   # сюда можно складывать файлы
-
+      - ./n8n/data:/home/node/.n8n  # Сохранение workflows и настроек
+    restart: unless-stopped
+  
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    volumes:
+      - ./rabbitmq_data:/var/lib/rabbitmq  # Сохранение данных RabbitMQ
+    ports:
+      - "5672:5672"    # Основной порт RabbitMQ (AMQP)
+      - "15672:15672"  # Веб-интерфейс управления: http://localhost:15672 (логин: guest/guest)
+    restart: unless-stopped
+  
   worker:
     build: ./worker
-    container_name: rag_worker
-    restart: always
-    env_file:
-      - .env
+    container_name: worker
     depends_on:
       - postgres
-      - redis
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./shared:/data   # worker видит те же файлы
+      - rabbitmq
+    environment:
+      POSTGRES_HOST: postgres
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    env_file:
+      - .env
+    restart: unless-stopped
 
-volumes:
-  pgdata:
-  n8n_data:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"  # Доступ к PostgreSQL через localhost:5432
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data  # Стандартный том
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql  # Копируем наш init.sql файл в папку, из которой постгрес автоматически запускает все запросы
+    restart: unless-stopped

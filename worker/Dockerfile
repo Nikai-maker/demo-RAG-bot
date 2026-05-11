@@ -1,11 +1,17 @@
+# Используем официальный образ Python
 FROM python:3.11-slim
 
+# Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /app
 
+# Копируем файлы зависимостей
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Устанавливаем зависимости
+RUN pip install -r requirements.txt
 
+# Копируем исходный код приложения
 COPY . .
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Указываем команду запуска (может отличаться в зависимости от твоего приложения)
+CMD ["python", "app.py"]
